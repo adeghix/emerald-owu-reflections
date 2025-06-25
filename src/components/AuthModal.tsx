@@ -17,12 +17,35 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
 
+  const trackCustomer = (email: string, type: 'signed_in' | 'registered' | 'guest') => {
+    const customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+    const newCustomer = {
+      id: Date.now().toString(),
+      email,
+      type,
+      timestamp: new Date().toISOString(),
+      ipAddress: '192.168.1.1', // In real app, get actual IP
+      userAgent: navigator.userAgent.substring(0, 50) + '...'
+    };
+    
+    customers.push(newCustomer);
+    localStorage.setItem('adminCustomers', JSON.stringify(customers));
+    
+    // Update stats
+    const stats = JSON.parse(localStorage.getItem('adminStats') || '{}');
+    stats.totalUsers = (stats.totalUsers || 0) + 1;
+    localStorage.setItem('adminStats', JSON.stringify(stats));
+  };
+
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
+    
+    // Track registration
+    trackCustomer(email, 'registered');
     
     // Simulate API call
     setTimeout(() => {
@@ -39,6 +62,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     
+    // Track sign in
+    trackCustomer(email, 'signed_in');
+    
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
@@ -48,8 +74,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }) => {
   };
 
   const handleGuestAccess = () => {
-    onLogin({ type: 'guest', name: 'Guest User' });
-    onClose();
+    // For guest access, we need an email
+    const email = prompt('Please enter your email to continue as guest:');
+    if (email && email.includes('@')) {
+      trackCustomer(email, 'guest');
+      onLogin({ type: 'guest', name: 'Guest User', email });
+      onClose();
+    }
   };
 
   if (showVerification) {

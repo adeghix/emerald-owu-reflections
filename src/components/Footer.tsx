@@ -4,16 +4,33 @@ import { Link } from 'react-router-dom';
 import WaterfallLogo from './WaterfallLogo';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { toast } from 'sonner';
 
 const Footer: React.FC = () => {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminCredentials, setAdminCredentials] = useState({ username: '', password: '' });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate admin login
-    console.log('Admin login attempt:', adminCredentials);
+    setIsLoading(true);
+    
+    // Secure admin credentials
+    const ADMIN_USERNAME = 'owufalls_admin';
+    const ADMIN_PASSWORD = 'owufalls2024!secure';
+    
+    if (adminCredentials.username === ADMIN_USERNAME && adminCredentials.password === ADMIN_PASSWORD) {
+      localStorage.setItem('adminAuth', 'authenticated');
+      localStorage.setItem('adminLoginTime', Date.now().toString());
+      toast.success('Admin login successful!');
+      window.location.href = '/admin';
+    } else {
+      toast.error('Invalid admin credentials');
+    }
+    
+    setIsLoading(false);
     setShowAdminLogin(false);
+    setAdminCredentials({ username: '', password: '' });
   };
 
   return (
@@ -89,35 +106,42 @@ const Footer: React.FC = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowAdminLogin(true)}
-                className="text-gray-500 hover:text-gray-400 text-xs"
+                className="text-gray-500 hover:text-emerald-400 text-xs bg-black/50 border border-emerald-500/20"
               >
-                Admin
+                Admin Access
               </Button>
             ) : (
-              <form onSubmit={handleAdminLogin} className="flex space-x-2">
+              <form onSubmit={handleAdminLogin} className="flex space-x-2 bg-black/50 backdrop-blur-md border border-emerald-500/20 rounded-lg p-2">
                 <Input
                   type="text"
                   placeholder="Username"
                   value={adminCredentials.username}
                   onChange={(e) => setAdminCredentials({...adminCredentials, username: e.target.value})}
-                  className="w-24 h-8 text-xs bg-gray-800 border-white/20"
+                  className="w-28 h-8 text-xs bg-gray-800 border-emerald-500/20 text-white"
+                  required
                 />
                 <Input
                   type="password"
                   placeholder="Password"
                   value={adminCredentials.password}
                   onChange={(e) => setAdminCredentials({...adminCredentials, password: e.target.value})}
-                  className="w-24 h-8 text-xs bg-gray-800 border-white/20"
+                  className="w-28 h-8 text-xs bg-gray-800 border-emerald-500/20 text-white"
+                  required
                 />
-                <Button type="submit" size="sm" className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600">
-                  Login
+                <Button 
+                  type="submit" 
+                  size="sm" 
+                  disabled={isLoading}
+                  className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600"
+                >
+                  {isLoading ? 'Loading...' : 'Login'}
                 </Button>
                 <Button 
                   type="button" 
                   variant="ghost" 
                   size="sm" 
                   onClick={() => setShowAdminLogin(false)}
-                  className="h-8 text-xs"
+                  className="h-8 text-xs text-emerald-400"
                 >
                   ×
                 </Button>
