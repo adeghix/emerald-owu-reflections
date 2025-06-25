@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Mail, Send, CheckCircle, X } from 'lucide-react';
+import { Switch } from '../ui/switch';
+import { Mail, Send, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EmailConfig {
@@ -14,6 +15,8 @@ interface EmailConfig {
   smtpPassword: string;
   fromEmail: string;
   fromName: string;
+  enableSSL: boolean;
+  enableNewsletter: boolean;
 }
 
 const EmailConfig: React.FC = () => {
@@ -22,71 +25,61 @@ const EmailConfig: React.FC = () => {
     smtpPort: '587',
     smtpUser: '',
     smtpPassword: '',
-    fromEmail: '',
-    fromName: 'Owu Falls Tourism'
+    fromEmail: 'noreply@owufalls.com',
+    fromName: 'Owu Falls Tourism',
+    enableSSL: true,
+    enableNewsletter: true
   });
-  const [isLoading, setIsLoading] = useState(false);
   const [testEmail, setTestEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
   useEffect(() => {
-    const savedConfig = localStorage.getItem('emailConfig');
+    // Load email config from localStorage
+    const savedConfig = localStorage.getItem('adminEmailConfig');
     if (savedConfig) {
       setConfig(JSON.parse(savedConfig));
     }
   }, []);
 
-  const handleSaveConfig = () => {
-    localStorage.setItem('emailConfig', JSON.stringify(config));
-    toast.success('Email configuration saved!');
+  const handleConfigChange = (field: keyof EmailConfig, value: string | boolean) => {
+    const newConfig = { ...config, [field]: value };
+    setConfig(newConfig);
+    localStorage.setItem('adminEmailConfig', JSON.stringify(newConfig));
   };
 
-  const handleTestConnection = async () => {
+  const testConnection = async () => {
     setConnectionStatus('testing');
+    setIsLoading(true);
     
-    // Simulate SMTP connection test
+    // Simulate API call
     setTimeout(() => {
-      if (config.smtpHost && config.smtpUser && config.smtpPassword) {
+      const isValid = config.smtpHost && config.smtpUser && config.smtpPassword;
+      if (isValid) {
         setConnectionStatus('success');
         toast.success('SMTP connection successful!');
       } else {
         setConnectionStatus('error');
         toast.error('SMTP connection failed. Please check your settings.');
       }
+      setIsLoading(false);
     }, 2000);
   };
 
-  const handleSendTestEmail = async () => {
+  const sendTestEmail = async () => {
     if (!testEmail) {
       toast.error('Please enter a test email address');
       return;
     }
-
+    
     setIsLoading(true);
     
     // Simulate sending test email
     setTimeout(() => {
       setIsLoading(false);
-      toast.success(`Test email sent to ${testEmail}!`);
-      
-      // Update email stats
-      const stats = JSON.parse(localStorage.getItem('adminStats') || '{}');
-      stats.emailsSent = (stats.emailsSent || 0) + 1;
-      localStorage.setItem('adminStats', JSON.stringify(stats));
+      toast.success(`Test email sent to ${testEmail}`);
+      setTestEmail('');
     }, 1500);
-  };
-
-  const getStatusIcon = () => {
-    switch (connectionStatus) {
-      case 'testing':
-        return <div className="animate-spin w-4 h-4 border-2 border-yellow-400 border-t-transparent rounded-full" />;
-      case 'success':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case 'error':
-        return <X className="w-4 h-4 text-red-400" />;
-      default:
-        return <Mail className="w-4 h-4 text-gray-400" />;
-    }
   };
 
   return (
@@ -94,17 +87,10 @@ const EmailConfig: React.FC = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-white">Email Configuration</h1>
         <div className="flex items-center space-x-2">
-          {getStatusIcon()}
-          <span className={`text-sm ${
-            connectionStatus === 'success' ? 'text-green-400' :
-            connectionStatus === 'error' ? 'text-red-400' :
-            connectionStatus === 'testing' ? 'text-yellow-400' :
-            'text-gray-400'
-          }`}>
-            {connectionStatus === 'testing' ? 'Testing...' :
-             connectionStatus === 'success' ? 'Connected' :
-             connectionStatus === 'error' ? 'Connection Failed' :
-             'Not Connected'}
+          {connectionStatus === 'success' && <CheckCircle className="w-5 h-5 text-green-400" />}
+          {connectionStatus === 'error' && <AlertCircle className="w-5 h-5 text-red-400" />}
+          <span className="text-sm text-gray-400">
+            Status: {connectionStatus === 'success' ? 'Connected' : connectionStatus === 'error' ? 'Error' : 'Not tested'}
           </span>
         </div>
       </div>
@@ -114,130 +100,130 @@ const EmailConfig: React.FC = () => {
         <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
           <CardHeader>
             <CardTitle className="text-white flex items-center">
-              <Mail className="w-5 h-5 mr-2 text-emerald-400" />
+              <Settings className="w-5 h-5 mr-2 text-emerald-400" />
               SMTP Settings
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-white">SMTP Host</Label>
-                <Input
-                  placeholder="smtp.gmail.com"
-                  value={config.smtpHost}
-                  onChange={(e) => setConfig({...config, smtpHost: e.target.value})}
-                  className="bg-gray-800 border-emerald-500/20 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-white">Port</Label>
-                <Input
-                  placeholder="587"
-                  value={config.smtpPort}
-                  onChange={(e) => setConfig({...config, smtpPort: e.target.value})}
-                  className="bg-gray-800 border-emerald-500/20 text-white"
-                />
-              </div>
-            </div>
             <div className="space-y-2">
-              <Label className="text-white">Username</Label>
+              <Label htmlFor="smtpHost" className="text-white">SMTP Host</Label>
               <Input
-                placeholder="your-email@gmail.com"
+                id="smtpHost"
+                value={config.smtpHost}
+                onChange={(e) => handleConfigChange('smtpHost', e.target.value)}
+                placeholder="smtp.gmail.com"
+                className="bg-gray-800 border-emerald-500/20 text-white"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="smtpPort" className="text-white">SMTP Port</Label>
+              <Input
+                id="smtpPort"
+                value={config.smtpPort}
+                onChange={(e) => handleConfigChange('smtpPort', e.target.value)}
+                placeholder="587"
+                className="bg-gray-800 border-emerald-500/20 text-white"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="smtpUser" className="text-white">SMTP Username</Label>
+              <Input
+                id="smtpUser"
                 value={config.smtpUser}
-                onChange={(e) => setConfig({...config, smtpUser: e.target.value})}
+                onChange={(e) => handleConfigChange('smtpUser', e.target.value)}
+                placeholder="your-email@gmail.com"
                 className="bg-gray-800 border-emerald-500/20 text-white"
               />
             </div>
+            
             <div className="space-y-2">
-              <Label className="text-white">Password</Label>
+              <Label htmlFor="smtpPassword" className="text-white">SMTP Password</Label>
               <Input
+                id="smtpPassword"
                 type="password"
-                placeholder="Your app password"
                 value={config.smtpPassword}
-                onChange={(e) => setConfig({...config, smtpPassword: e.target.value})}
+                onChange={(e) => handleConfigChange('smtpPassword', e.target.value)}
+                placeholder="your-app-password"
                 className="bg-gray-800 border-emerald-500/20 text-white"
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-white">From Email</Label>
-              <Input
-                placeholder="noreply@owufalls.com"
-                value={config.fromEmail}
-                onChange={(e) => setConfig({...config, fromEmail: e.target.value})}
-                className="bg-gray-800 border-emerald-500/20 text-white"
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={config.enableSSL}
+                onCheckedChange={(checked) => handleConfigChange('enableSSL', checked)}
               />
+              <Label className="text-white">Enable SSL/TLS</Label>
             </div>
-            <div className="space-y-2">
-              <Label className="text-white">From Name</Label>
-              <Input
-                placeholder="Owu Falls Tourism"
-                value={config.fromName}
-                onChange={(e) => setConfig({...config, fromName: e.target.value})}
-                className="bg-gray-800 border-emerald-500/20 text-white"
-              />
-            </div>
-            <div className="flex space-x-3">
-              <Button 
-                onClick={handleSaveConfig}
-                className="bg-emerald-500 hover:bg-emerald-600"
-              >
-                Save Configuration
-              </Button>
-              <Button 
-                onClick={handleTestConnection}
-                variant="outline"
-                className="border-emerald-500/20 text-emerald-400"
-                disabled={connectionStatus === 'testing'}
-              >
-                Test Connection
-              </Button>
-            </div>
+            
+            <Button
+              onClick={testConnection}
+              disabled={isLoading}
+              className="w-full bg-emerald-500 hover:bg-emerald-600"
+            >
+              {connectionStatus === 'testing' ? 'Testing Connection...' : 'Test Connection'}
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Test Email */}
+        {/* Email Settings */}
         <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
           <CardHeader>
             <CardTitle className="text-white flex items-center">
-              <Send className="w-5 h-5 mr-2 text-emerald-400" />
-              Test Email
+              <Mail className="w-5 h-5 mr-2 text-emerald-400" />
+              Email Settings
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-white">Test Email Address</Label>
+              <Label htmlFor="fromEmail" className="text-white">From Email</Label>
               <Input
-                type="email"
-                placeholder="test@example.com"
-                value={testEmail}
-                onChange={(e) => setTestEmail(e.target.value)}
+                id="fromEmail"
+                value={config.fromEmail}
+                onChange={(e) => handleConfigChange('fromEmail', e.target.value)}
+                placeholder="noreply@owufalls.com"
                 className="bg-gray-800 border-emerald-500/20 text-white"
               />
             </div>
-            <Button 
-              onClick={handleSendTestEmail}
-              disabled={isLoading || !testEmail}
-              className="w-full bg-emerald-500 hover:bg-emerald-600"
-            >
-              {isLoading ? 'Sending...' : 'Send Test Email'}
-            </Button>
             
-            {/* Email Templates */}
-            <div className="mt-6 space-y-3">
-              <h3 className="text-white font-medium">Quick Templates</h3>
-              <div className="space-y-2">
-                <button className="w-full p-3 text-left bg-gray-800/50 rounded-lg border border-emerald-500/10 hover:bg-emerald-500/10 transition-colors">
-                  <div className="text-white text-sm font-medium">Welcome Email</div>
-                  <div className="text-gray-400 text-xs">Send to new users</div>
-                </button>
-                <button className="w-full p-3 text-left bg-gray-800/50 rounded-lg border border-emerald-500/10 hover:bg-emerald-500/10 transition-colors">
-                  <div className="text-white text-sm font-medium">Booking Confirmation</div>
-                  <div className="text-gray-400 text-xs">Tour booking receipt</div>
-                </button>
-                <button className="w-full p-3 text-left bg-gray-800/50 rounded-lg border border-emerald-500/10 hover:bg-emerald-500/10 transition-colors">
-                  <div className="text-white text-sm font-medium">Newsletter</div>
-                  <div className="text-gray-400 text-xs">Monthly updates</div>
-                </button>
+            <div className="space-y-2">
+              <Label htmlFor="fromName" className="text-white">From Name</Label>
+              <Input
+                id="fromName"
+                value={config.fromName}
+                onChange={(e) => handleConfigChange('fromName', e.target.value)}
+                placeholder="Owu Falls Tourism"
+                className="bg-gray-800 border-emerald-500/20 text-white"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={config.enableNewsletter}
+                onCheckedChange={(checked) => handleConfigChange('enableNewsletter', checked)}
+              />
+              <Label className="text-white">Enable Newsletter Signup</Label>
+            </div>
+            
+            <div className="pt-4 border-t border-emerald-500/20">
+              <Label htmlFor="testEmail" className="text-white">Test Email Address</Label>
+              <div className="flex space-x-2 mt-2">
+                <Input
+                  id="testEmail"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  placeholder="test@example.com"
+                  className="bg-gray-800 border-emerald-500/20 text-white"
+                />
+                <Button
+                  onClick={sendTestEmail}
+                  disabled={isLoading || !testEmail}
+                  className="bg-emerald-500 hover:bg-emerald-600"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
               </div>
             </div>
           </CardContent>

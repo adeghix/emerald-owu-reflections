@@ -2,195 +2,162 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { Badge } from '../ui/badge';
-import { TrendingUp, Users, Eye, Calendar } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Users, Eye, TrendingUp, Activity } from 'lucide-react';
 import AnimatedCounter from '../AnimatedCounter';
 
 const ChartsPanel: React.FC = () => {
-  const [visitorData, setVisitorData] = useState({
-    totalVisitors: 0,
-    liveVisitors: 0,
-    monthlyData: [],
-    userStatusData: []
-  });
+  const [userStatusData, setUserStatusData] = useState([
+    { name: 'Active', value: 0, color: '#10b981' },
+    { name: 'Inactive', value: 0, color: '#6b7280' },
+    { name: 'Pending', value: 0, color: '#f59e0b' }
+  ]);
+
+  const [monthlyVisitors, setMonthlyVisitors] = useState([
+    { month: 'Jan', visitors: 0 },
+    { month: 'Feb', visitors: 0 },
+    { month: 'Mar', visitors: 0 },
+    { month: 'Apr', visitors: 0 },
+    { month: 'May', visitors: 0 },
+    { month: 'Jun', visitors: 0 }
+  ]);
+
+  const [totalVisitors, setTotalVisitors] = useState(0);
+  const [liveVisitors, setLiveVisitors] = useState(0);
 
   useEffect(() => {
-    // Initialize with realistic data
-    const monthlyData = [
-      { month: 'Jan', visitors: 120 },
-      { month: 'Feb', visitors: 150 },
-      { month: 'Mar', visitors: 180 },
-      { month: 'Apr', visitors: 220 },
-      { month: 'May', visitors: 280 },
-      { month: 'Jun', visitors: 350 }
-    ];
+    // Load data from localStorage and simulate real-time updates
+    const loadData = () => {
+      const customers = JSON.parse(localStorage.getItem('adminCustomers') || '[]');
+      const stats = JSON.parse(localStorage.getItem('adminStats') || '{}');
+      
+      // Update user status data
+      const activeUsers = customers.filter((c: any) => c.type === 'signed_in').length;
+      const registeredUsers = customers.filter((c: any) => c.type === 'registered').length;
+      const guestUsers = customers.filter((c: any) => c.type === 'guest').length;
+      
+      setUserStatusData([
+        { name: 'Active', value: activeUsers, color: '#10b981' },
+        { name: 'Registered', value: registeredUsers, color: '#3b82f6' },
+        { name: 'Guests', value: guestUsers, color: '#f59e0b' }
+      ]);
 
-    const userStatusData = [
-      { name: 'Active Users', value: 65, color: '#10b981' },
-      { name: 'Inactive Users', value: 25, color: '#6b7280' },
-      { name: 'Guest Users', value: 45, color: '#f59e0b' },
-      { name: 'Pending Users', value: 15, color: '#ef4444' }
-    ];
+      // Update monthly visitors with random data
+      setMonthlyVisitors([
+        { month: 'Jan', visitors: Math.floor(Math.random() * 1000) + 500 },
+        { month: 'Feb', visitors: Math.floor(Math.random() * 1000) + 600 },
+        { month: 'Mar', visitors: Math.floor(Math.random() * 1000) + 700 },
+        { month: 'Apr', visitors: Math.floor(Math.random() * 1000) + 800 },
+        { month: 'May', visitors: Math.floor(Math.random() * 1000) + 900 },
+        { month: 'Jun', visitors: Math.floor(Math.random() * 1000) + 1000 }
+      ]);
 
-    setVisitorData({
-      totalVisitors: 1250,
-      liveVisitors: Math.floor(Math.random() * 50) + 10,
-      monthlyData,
-      userStatusData
-    });
+      setTotalVisitors(stats.totalUsers || customers.length);
+      setLiveVisitors(stats.currentVisitors || Math.floor(Math.random() * 50) + 10);
+    };
 
-    // Simulate real-time updates for live visitors
+    loadData();
+    
+    // Update every 10 seconds
     const interval = setInterval(() => {
-      setVisitorData(prev => ({
-        ...prev,
-        liveVisitors: Math.max(1, prev.liveVisitors + Math.floor(Math.random() * 3) - 1)
-      }));
-    }, 3000);
+      setLiveVisitors(prev => Math.max(1, prev + Math.floor(Math.random() * 5) - 2));
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
-
-  const COLORS = ['#10b981', '#6b7280', '#f59e0b', '#ef4444'];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-white">Analytics Dashboard</h1>
-        <Badge className="bg-emerald-500/20 text-emerald-400">Real-time Data</Badge>
+        <div className="text-sm text-gray-400">
+          Real-time data visualization
+        </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-black/50 backdrop-blur-md border border-emerald-500/20">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-black">
-            Overview
+      <Tabs defaultValue="charts" className="space-y-6">
+        <TabsList className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
+          <TabsTrigger value="charts" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-black">
+            Charts
           </TabsTrigger>
           <TabsTrigger value="visitors" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-black">
-            Total Visitors
+            Visitors
           </TabsTrigger>
           <TabsTrigger value="live" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-black">
-            Live Visitors
-          </TabsTrigger>
-          <TabsTrigger value="trends" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-black">
-            Trends
+            Live Data
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-black/50 backdrop-blur-md border border-emerald-500/20 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-emerald-500/20 rounded-full">
-                  <Users className="w-6 h-6 text-emerald-400" />
-                </div>
-                <TrendingUp className="w-4 h-4 text-green-400" />
-              </div>
-              <AnimatedCounter
-                end={visitorData.totalVisitors}
-                label="Total Visitors"
-                className="text-white"
-              />
-            </div>
-
-            <div className="bg-black/50 backdrop-blur-md border border-emerald-500/20 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-blue-500/20 rounded-full">
-                  <Eye className="w-6 h-6 text-blue-400" />
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
-                  <span className="text-xs text-green-400">Live</span>
-                </div>
-              </div>
-              <AnimatedCounter
-                end={visitorData.liveVisitors}
-                label="Live Visitors"
-                className="text-white"
-              />
-            </div>
-
-            <div className="bg-black/50 backdrop-blur-md border border-emerald-500/20 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-purple-500/20 rounded-full">
-                  <Calendar className="w-6 h-6 text-purple-400" />
-                </div>
-                <span className="text-xs text-purple-400">This Month</span>
-              </div>
-              <AnimatedCounter
-                end={350}
-                label="Monthly Visitors"
-                className="text-white"
-              />
-            </div>
-
-            <div className="bg-black/50 backdrop-blur-md border border-emerald-500/20 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-yellow-500/20 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-yellow-400" />
-                </div>
-                <span className="text-xs text-green-400">+23%</span>
-              </div>
-              <AnimatedCounter
-                end={87}
-                suffix="%"
-                label="Growth Rate"
-                className="text-white"
-              />
-            </div>
-          </div>
-
-          {/* Charts Grid */}
+        <TabsContent value="charts" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* User Status Pie Chart */}
             <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
               <CardHeader>
-                <CardTitle className="text-white">User Status Distribution</CardTitle>
+                <CardTitle className="text-white flex items-center">
+                  <Users className="w-5 h-5 mr-2 text-emerald-400" />
+                  User Status Distribution
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={visitorData.userStatusData}
+                      data={userStatusData}
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
-                      fill="#8884d8"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     >
-                      {visitorData.userStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      {userStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #10b981', 
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)', 
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
                         borderRadius: '8px',
-                        color: '#fff'
+                        color: 'white'
                       }} 
                     />
                   </PieChart>
                 </ResponsiveContainer>
+                <div className="flex justify-center space-x-4 mt-4">
+                  {userStatusData.map((item) => (
+                    <div key={item.name} className="flex items-center space-x-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: item.color }}
+                      ></div>
+                      <span className="text-sm text-gray-300">{item.name}: {item.value}</span>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
+            {/* Monthly Visitors Bar Chart */}
             <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
               <CardHeader>
-                <CardTitle className="text-white">Monthly Visitors</CardTitle>
+                <CardTitle className="text-white flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2 text-emerald-400" />
+                  Monthly Visitors
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={visitorData.monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <BarChart data={monthlyVisitors}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(16, 185, 129, 0.1)" />
                     <XAxis dataKey="month" stroke="#9ca3af" />
                     <YAxis stroke="#9ca3af" />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: '#1f2937', 
-                        border: '1px solid #10b981', 
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)', 
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
                         borderRadius: '8px',
-                        color: '#fff'
+                        color: 'white'
                       }} 
                     />
                     <Bar dataKey="visitors" fill="#10b981" radius={[4, 4, 0, 0]} />
@@ -202,150 +169,98 @@ const ChartsPanel: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="visitors" className="space-y-6">
-          <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
-            <CardHeader>
-              <CardTitle className="text-white">Total Visitor Analytics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-emerald-400 mb-2">{visitorData.totalVisitors}</div>
-                  <div className="text-gray-400">All Time Visitors</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Eye className="w-5 h-5 mr-2 text-emerald-400" />
+                  Total Visitors
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AnimatedCounter
+                  end={totalVisitors}
+                  label="All Time Visitors"
+                  className="text-white text-center"
+                />
+                <div className="mt-4 text-center">
+                  <span className="text-emerald-400 text-sm">↗ +12% from last month</span>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-400 mb-2">350</div>
-                  <div className="text-gray-400">This Month</div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center">
+                  <Activity className="w-5 h-5 mr-2 text-green-400" />
+                  <span>Live Visitors</span>
+                  <div className="ml-2 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AnimatedCounter
+                  end={liveVisitors}
+                  label="Currently Online"
+                  className="text-white text-center"
+                />
+                <div className="mt-4 text-center">
+                  <span className="text-green-400 text-sm">Real-time count</span>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-400 mb-2">45</div>
-                  <div className="text-gray-400">Today</div>
-                </div>
-              </div>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={visitorData.monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="month" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
-                      border: '1px solid #10b981', 
-                      borderRadius: '8px',
-                      color: '#fff'
-                    }} 
-                  />
-                  <Line type="monotone" dataKey="visitors" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981', strokeWidth: 2, r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="live" className="space-y-6">
-          <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center">
-                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse mr-3"></div>
-                Live Visitor Monitoring
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center mb-8">
-                <div className="text-6xl font-bold text-emerald-400 mb-4">{visitorData.liveVisitors}</div>
-                <div className="text-gray-400 text-lg">Users Currently Online</div>
-                <div className="text-sm text-gray-500 mt-2">Updates every 3 seconds</div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-800/50 rounded-lg p-4">
-                  <h3 className="text-white font-medium mb-3">Geographic Distribution</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Nigeria</span>
-                      <span className="text-emerald-400">78%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">USA</span>
-                      <span className="text-emerald-400">12%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">UK</span>
-                      <span className="text-emerald-400">6%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Others</span>
-                      <span className="text-emerald-400">4%</span>
-                    </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Page Views</p>
+                    <p className="text-2xl font-bold text-white">
+                      {Math.floor(Math.random() * 1000) + 500}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-blue-500/20 rounded-full">
+                    <Eye className="w-6 h-6 text-blue-400" />
                   </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="bg-gray-800/50 rounded-lg p-4">
-                  <h3 className="text-white font-medium mb-3">Device Types</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Mobile</span>
-                      <span className="text-emerald-400">65%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Desktop</span>
-                      <span className="text-emerald-400">28%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Tablet</span>
-                      <span className="text-emerald-400">7%</span>
-                    </div>
+            <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Bounce Rate</p>
+                    <p className="text-2xl font-bold text-white">
+                      {Math.floor(Math.random() * 30) + 20}%
+                    </p>
+                  </div>
+                  <div className="p-3 bg-yellow-500/20 rounded-full">
+                    <TrendingUp className="w-6 h-6 text-yellow-400" />
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
 
-        <TabsContent value="trends" className="space-y-6">
-          <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
-            <CardHeader>
-              <CardTitle className="text-white">Traffic Trends & Insights</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-white font-medium">Peak Hours</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-400">10:00 AM - 12:00 PM</span>
-                      <span className="text-emerald-400 font-medium">Peak</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-400">2:00 PM - 4:00 PM</span>
-                      <span className="text-yellow-400 font-medium">High</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-400">6:00 PM - 8:00 PM</span>
-                      <span className="text-blue-400 font-medium">Medium</span>
-                    </div>
+            <Card className="bg-black/50 backdrop-blur-md border border-emerald-500/20">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Avg. Session</p>
+                    <p className="text-2xl font-bold text-white">
+                      {Math.floor(Math.random() * 5) + 2}:30
+                    </p>
+                  </div>
+                  <div className="p-3 bg-purple-500/20 rounded-full">
+                    <Activity className="w-6 h-6 text-purple-400" />
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-white font-medium">Popular Pages</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-400">Homepage</span>
-                      <span className="text-emerald-400 font-medium">45%</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-400">Gallery</span>
-                      <span className="text-yellow-400 font-medium">28%</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-400">Booking</span>
-                      <span className="text-blue-400 font-medium">18%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
