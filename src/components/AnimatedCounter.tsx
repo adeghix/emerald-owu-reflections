@@ -8,6 +8,8 @@ interface AnimatedCounterProps {
   prefix?: string;
   label: string;
   icon?: string;
+  className?: string;
+  decimals?: number;
 }
 
 const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ 
@@ -16,7 +18,9 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   suffix = '', 
   prefix = '', 
   label,
-  icon 
+  icon,
+  className = '',
+  decimals = 0
 }) => {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -55,7 +59,7 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
       const currentCount = startValue + (endValue - startValue) * easeOutQuart;
 
-      setCount(Math.floor(currentCount));
+      setCount(currentCount);
 
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -65,10 +69,17 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
     requestAnimationFrame(animate);
   }, [isVisible, end, duration]);
 
+  const formatNumber = (num: number) => {
+    if (decimals > 0) {
+      return num.toFixed(decimals);
+    }
+    return Math.floor(num).toLocaleString();
+  };
+
   return (
     <div 
       ref={counterRef}
-      className="text-center glassmorphism-card p-6 rounded-lg hover:scale-105 transition-transform duration-300"
+      className={`text-center glassmorphism-card p-6 rounded-lg hover:scale-105 transition-transform duration-300 ${className}`}
     >
       {icon && (
         <div className="text-4xl mb-3 animate-float">
@@ -76,7 +87,7 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
         </div>
       )}
       <div className="text-3xl md:text-4xl font-bold text-emerald-400 mb-2">
-        {prefix}{count.toLocaleString()}{suffix}
+        {prefix}{formatNumber(count)}{suffix}
       </div>
       <div className="text-sm text-gray-300 uppercase tracking-wider">
         {label}

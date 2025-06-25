@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '../components/ui/button';
 import { Link } from 'react-router-dom';
@@ -57,22 +56,31 @@ const Index: React.FC = () => {
       <section className="py-20 bg-gray-900/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <AnimatedCounter end={120} suffix="m" className="text-4xl font-bold text-emerald-400" />
-              <p className="text-gray-300 mt-2">Height</p>
-            </div>
-            <div className="text-center">
-              <AnimatedCounter end={50} suffix="+" className="text-4xl font-bold text-emerald-400" />
-              <p className="text-gray-300 mt-2">Bird Species</p>
-            </div>
-            <div className="text-center">
-              <AnimatedCounter end={4.8} decimals={1} suffix="/5" className="text-4xl font-bold text-emerald-400" />
-              <p className="text-gray-300 mt-2">Rating</p>
-            </div>
-            <div className="text-center">
-              <AnimatedCounter end={1000} suffix="+" className="text-4xl font-bold text-emerald-400" />
-              <p className="text-gray-300 mt-2">Monthly Visitors</p>
-            </div>
+            <AnimatedCounter 
+              end={120} 
+              suffix="m" 
+              label="Height"
+              className="text-4xl font-bold text-emerald-400" 
+            />
+            <AnimatedCounter 
+              end={50} 
+              suffix="+" 
+              label="Bird Species"
+              className="text-4xl font-bold text-emerald-400" 
+            />
+            <AnimatedCounter 
+              end={4.8} 
+              decimals={1} 
+              suffix="/5" 
+              label="Rating"
+              className="text-4xl font-bold text-emerald-400" 
+            />
+            <AnimatedCounter 
+              end={1000} 
+              suffix="+" 
+              label="Monthly Visitors"
+              className="text-4xl font-bold text-emerald-400" 
+            />
           </div>
         </div>
       </section>
